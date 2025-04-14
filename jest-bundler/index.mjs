@@ -82,6 +82,13 @@ const worker = new Worker(
   },
 );
 
+const minifyWorker = new Worker(
+  join(dirname(fileURLToPath(import.meta.url)), 'minify.worker.js'),
+  {
+    enableWorkerThreads: true,
+  },
+);
+
 // Wrap modules with `define(<id>, function(module, exports, require) { <code> });`
 const wrapModule = (id, code) =>
   `define(${id}, function(module, exports, require) {\n${code}});`;
@@ -93,6 +100,9 @@ const results = await Promise.all(
     .map(async ([module, metadata]) => {
       let { id, code } = metadata;
       ({ code } = await worker.transformFile(code));
+      if (options.minify) {
+        ({ code } = await minifyWorker.minifySync(code));
+      }
       for (const [dependencyName, dependencyPath] of metadata.dependencyMap) {
         const dependency = modules.get(dependencyPath);
         code = code.replace(
