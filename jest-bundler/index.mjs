@@ -7,6 +7,7 @@ import Resolver from 'jest-resolve';
 import yargs from 'yargs';
 import fs from 'fs';
 import { transformSync } from '@babel/core';
+import { Worker } from 'jest-worker';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), 'product');
 
@@ -73,18 +74,25 @@ while (queue.length) {
 console.log(chalk.bold(`❯ Found ${chalk.blue(seen.size)} files`));
 
 console.log(chalk.bold(`❯ Serializing bundle`));
+
+const worker = new Worker(
+  join(dirname(fileURLToPath(import.meta.url)), 'worker.js'),
+  {
+    enableWorkerThreads: true,
+  },
+);
+
 // Wrap modules with `define(<id>, function(module, exports, require) { <code> });`
 const wrapModule = (id, code) =>
   `define(${id}, function(module, exports, require) {\n${code}});`;
+
 // The code for each module gets added to this array.
 const results = await Promise.all(
   Array.from(modules)
     .reverse()
     .map(async ([module, metadata]) => {
       let { id, code } = metadata;
-      code = transformSync(code, {
-        plugins: ['@babel/plugin-transform-modules-commonjs'],
-      }).code;
+      ({ code } = await worker.transformFile(code));
       for (const [dependencyName, dependencyPath] of metadata.dependencyMap) {
         const dependency = modules.get(dependencyPath);
         code = code.replace(
