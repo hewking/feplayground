@@ -34,3 +34,4 @@ node index.mjs -o bundle.js -e index.js
 
 1. [Building a JavaScript Bundler](https://cpojer.net/posts/building-a-javascript-bundler)
 2. [jest-worker](https://github.com/jest-community/jest-worker)
+3. [Why webpack?](https://webpack.js.org/concepts/why-webpack/)

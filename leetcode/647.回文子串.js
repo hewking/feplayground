@@ -76,4 +76,3 @@ var isPalindromicString = function(s) {
 }
 
 // @lc code=end
-
